@@ -1,0 +1,35 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Press+Start+2P&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-pixel: "Press Start 2P", cursive;
+}
+
+@layer base {
+  body {
+    @apply font-sans text-zinc-900 antialiased bg-white;
+  }
+  
+  .font-mono {
+    @apply font-mono;
+  }
+}
+
+@layer components {
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 2px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-zinc-200 rounded-full;
+  }
+  
+  .pixel-text {
+    @apply font-pixel tracking-tighter;
+    image-rendering: pixelated;
+  }
+}

@@ -1,0 +1,130 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User account settings and preferences",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "language": { "type": "string", "enum": ["en", "ne"] },
+        "bizType": { "type": "string", "enum": ["Restaurant", "Store"] },
+        "setupComplete": { "type": "boolean" },
+        "qrImageUrl": { "type": "string" }
+      },
+      "required": ["uid"]
+    },
+    "Staff": {
+      "title": "Staff Member",
+      "description": "Employee record and status",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "role": { "type": "string" },
+        "status": { "type": "string", "enum": ["In", "Out"] },
+        "clockInTime": { "type": "string" },
+        "userId": { "type": "string" },
+        "imageUrl": { "type": "string" }
+      },
+      "required": ["name", "role", "status", "userId"]
+    },
+    "StaffLog": {
+      "title": "Staff Attendance Log",
+      "description": "Historical records of clock in/out for 7 days",
+      "type": "object",
+      "properties": {
+        "staffId": { "type": "string" },
+        "in": { "type": "string" },
+        "out": { "type": "string" },
+        "date": { "type": "string" },
+        "userId": { "type": "string" }
+      }
+    },
+    "Product": {
+      "title": "Menu/Inventory Item",
+      "description": "Products available for sale",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "price": { "type": "number" },
+        "category": { "type": "string" },
+        "userId": { "type": "string" },
+        "imageUrl": { "type": "string" }
+      },
+      "required": ["name", "price", "category", "userId"]
+    },
+    "Expense": {
+      "title": "Business Expense",
+      "description": "Records of purchases and operational costs",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "amount": { "type": "number" },
+        "category": { "type": "string" },
+        "description": { "type": "string" },
+        "userId": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "timestamp": { "type": "string" }
+      }
+    },
+    "Ingredient": {
+      "title": "Raw Material",
+      "description": "Ingredients for cost analysis",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "unit": { "type": "string" },
+        "qty": { "type": "number" },
+        "price": { "type": "number" },
+        "userId": { "type": "string" }
+      }
+    },
+    "Order": {
+      "title": "Customer Order",
+      "description": "Transaction records",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string" },
+        "amount": { "type": "number" },
+        "status": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "userId": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User specific settings"
+    },
+    "/staff/{staffId}": {
+      "schema": "Staff",
+      "description": "Staff directory"
+    },
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Catalog of items"
+    },
+    "/ingredients/{ingId}": {
+      "schema": "Ingredient",
+      "description": "Inventory for calculation"
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Sales history"
+    },
+    "/expenses/{expenseId}": {
+      "schema": "Expense",
+      "description": "Operational costs tracker"
+    },
+    "/staff_logs/{logId}": {
+      "schema": "StaffLog",
+      "description": "Attendance history"
+    }
+  }
+}

@@ -1,0 +1,146 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+       return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Validation Blueprints
+    function isValidUser(data) {
+      return data.uid == request.auth.uid &&
+             (data.email == null || data.email is string) &&
+             (data.displayName == null || data.displayName is string) &&
+             data.language in ['en', 'ne'] &&
+             data.bizType in ['Restaurant', 'Store'] &&
+             (data.setupComplete == null || data.setupComplete is bool) &&
+             (data.qrImageUrl == null || data.qrImageUrl is string) &&
+             (data.createdAt == null || data.createdAt is timestamp);
+    }
+
+    function isValidStaff(data) {
+      return data.userId == request.auth.uid &&
+             data.name is string && data.name.size() <= 100 &&
+             data.role is string && data.role.size() <= 100 &&
+             data.status in ['In', 'Out'];
+    }
+
+    function isValidStaffLog(data) {
+      return data.userId == request.auth.uid &&
+             data.staffId is string &&
+             data.date is string;
+    }
+
+    function isValidProduct(data) {
+      return data.userId == request.auth.uid &&
+             data.name is string && data.name.size() <= 100 &&
+             data.price is number && data.price >= 0 &&
+             data.category is string && data.category.size() <= 100;
+    }
+
+    function isValidExpense(data) {
+      return data.userId == request.auth.uid &&
+             data.amount is number && data.amount >= 0 &&
+             data.category is string;
+    }
+
+    function isValidIngredient(data) {
+      return data.userId == request.auth.uid &&
+             data.name is string && data.name.size() <= 100 &&
+             data.price is number && data.price >= 0 &&
+             data.qty is number && data.qty >= 0;
+    }
+
+    function isValidOrder(data) {
+      return data.userId == request.auth.uid &&
+             data.totalBill is number && data.totalBill >= 0 &&
+             data.status is string && data.status.size() <= 50 &&
+             data.items is list && data.items.size() > 0;
+    }
+
+    // Match Blocks
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(incoming());
+      allow update: if isOwner(userId) && isValidUser(incoming()) && 
+                    incoming().diff(existing()).affectedKeys().hasAny(['language', 'bizType', 'setupComplete', 'qrImageUrl']);
+    }
+
+    match /staff/{staffId} {
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidStaff(incoming());
+      allow update: if isSignedIn() && existing().userId == request.auth.uid && isValidStaff(incoming()) &&
+                    incoming().diff(existing()).affectedKeys().hasAny(['name', 'role', 'status', 'clockInTime', 'imageUrl']);
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    match /staff_logs/{logId} {
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidStaffLog(incoming());
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    match /products/{productId} {
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidProduct(incoming());
+      allow update: if isSignedIn() && existing().userId == request.auth.uid && isValidProduct(incoming()) &&
+                    incoming().diff(existing()).affectedKeys().hasAny(['name', 'price', 'category', 'imageUrl']);
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    match /expenses/{expenseId} {
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidExpense(incoming());
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    match /ingredients/{ingId} {
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidIngredient(incoming());
+      allow update: if isSignedIn() && existing().userId == request.auth.uid && isValidIngredient(incoming()) &&
+                    incoming().diff(existing()).affectedKeys().hasAny(['name', 'unit', 'qty', 'price']);
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    match /orders/{orderId} {
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidOrder(incoming());
+      allow update: if isSignedIn() && existing().userId == request.auth.uid && isValidOrder(incoming()) &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['status']);
+      allow delete: if false; // Orders are immutable history usually
+    }
+
+    match /activeSessions/{sessionId} {
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update: if isSignedIn() && existing().userId == request.auth.uid && incoming().userId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+  }
+}
